@@ -4,7 +4,7 @@
   "description": "Building a simple fintech application for assessment",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cross-env NODE_ENV=test jest"
   },
   "keywords": [],
   "author": "Josiah Gerald",
@@ -21,7 +21,9 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "jest": "^30.0.5",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
   }
 }
