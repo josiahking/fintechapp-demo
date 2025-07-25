@@ -33,6 +33,12 @@ describe('Auth Endpoints', () => {
         expect(res.body).toHaveProperty('token');
     });
 
+    it('should not allow duplicate user signup', async () => {
+        const res = await request(app).post('/api/auth/signup').send(userData);
+        expect(res.statusCode).toBe(400);
+        expect(res.body).toHaveProperty('message');
+    });
+
     it('should fail login with wrong credentials', async () => {
         const res = await request(app).post('/api/auth/login').send({
             email: userData.email,
