@@ -1,42 +1,42 @@
 const knex = require('../../knex');
 
 /**
- * Update virtual account balance based on transaction type.
+ * Safely updates the balance of a virtual account.
  *
- * @param {Object} virtualAccount - The virtual account object.
- * @param {number} amount - The amount to add or deduct.
- * @param {'debit' | 'credit'} type - The type of transaction.
- * @returns {Promise<number>} - The new balance.
+ * @param {Object} virtualAccount - The virtual account object from the database.
+ * @param {number} amount - The amount to update the balance by.
+ * @param {'debit' | 'credit'} type - The type of transaction to apply.
+ * @returns {Promise<number>} - The updated balance after the transaction.
+ * @throws {Error} - If inputs are invalid or balance is insufficient.
  */
 const handleBalanceUpdate = async (virtualAccount, amount, type) => {
-  if (!virtualAccount) {
-    throw new Error('Missing virtual account');
+  if (!virtualAccount?.id) {
+    throw new Error('Missing or invalid virtual account');
   }
 
-  if (typeof amount !== 'number') {
+  if (typeof amount !== 'number' || isNaN(amount) || amount <= 0) {
     throw new Error('Invalid amount');
   }
 
   if (!['debit', 'credit'].includes(type)) {
-    throw new Error('Invalid type parameter');
+    throw new Error('Invalid transaction type');
   }
 
   const numericAmount = toDecimal(amount);
-  const currentBalance = toDecimal(virtualAccount.balance);
-  let newBalance;
+  const currentBalance = toDecimal(virtualAccount.balance || 0);
+
+  let newBalance = currentBalance;
 
   if (type === 'credit') {
-    newBalance = toDecimal(currentBalance + numericAmount);
-  } else if (type === 'debit') {
+    newBalance += numericAmount;
+  } else {
     if (numericAmount > currentBalance) {
       throw new Error('Insufficient balance');
     }
-    newBalance = toDecimal(currentBalance - numericAmount);
+    newBalance -= numericAmount;
   }
 
-  if (newBalance < 0) {
-    throw new Error('Insufficient balance');
-  }
+  newBalance = toDecimal(newBalance); // Ensure it’s still properly rounded
 
   await knex('virtual_accounts')
     .where({ id: virtualAccount.id })
@@ -49,14 +49,17 @@ const handleBalanceUpdate = async (virtualAccount, amount, type) => {
 };
 
 /**
- * Convert number to proper value for transaction
- * @param {number} value 
- * @returns 
+ * Converts a number to a 2-decimal float.
+ *
+ * @param {number|string} value - The value to format.
+ * @returns {number} - A number rounded to 2 decimal places.
+ * @throws {Error} - If the input is not a valid number.
  */
-
 function toDecimal(value) {
   const num = parseFloat(value);
-  if (isNaN(num)) throw new Error('Invalid decimal value');
+  if (isNaN(num)) {
+    throw new Error('Invalid decimal value');
+  }
   return parseFloat(num.toFixed(2));
 }
 
