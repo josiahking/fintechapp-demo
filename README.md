@@ -1,13 +1,14 @@
+
+# 🧾 Fintech App - Raven Integration – Node.js + Knex.js
+
+This project implements and tests a webhook handler for Raven bank transfer notifications. It includes a secure Express endpoint, controller logic, database interactions using Knex.js, and a comprehensive test suite using Jest.
+
+---
+
 ## API Documentation
 
 The full Postman documentation can be found here:  
 👉 [View API Docs](https://documenter.getpostman.com/view/47073466/2sB34oCxoK)
-
-
-
-# 🧾 Raven Webhook Integration – Node.js + Knex.js
-
-This project implements and tests a webhook handler for Raven bank transfer notifications. It includes a secure Express endpoint, controller logic, database interactions using Knex.js, and a comprehensive test suite using Jest.
 
 ---
 
