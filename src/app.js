@@ -4,6 +4,7 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth.routes');
+const accountRoutes = require('./routes/account.routes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/accounts', accountRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
