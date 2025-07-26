@@ -1,21 +1,36 @@
 const request = require('supertest');
-const app = require('../src/app'); // Adjust this path to your Express app
-const knex = require('../knex');   // Your configured knex instance
+const app = require('../src/app'); // Express app
+const knex = require('../knex');   // Configured Knex instance
 require('dotenv').config();
 
-const validSecret = process.env.RAVEN_WEBHOOK_SECRET || 'your_webhook_secret_key'; // same as used in handler
+const validSecret = process.env.RAVEN_WEBHOOK_SECRET || 'your_webhook_secret_key'; // Fallback secret for tests
 
+/**
+ * Integration test suite for Raven Webhook handler.
+ * These tests verify behavior of the /webhook endpoint for various webhook payloads,
+ * including success, failure, logging, and validation.
+ */
 describe('Raven Webhook Handler', () => {
   const baseUrl = '/webhook';
 
+  /**
+   * Clean webhook_events table before each test to ensure isolated test runs.
+   */
   beforeEach(async () => {
     await knex('webhook_events').truncate();
   });
 
+  /**
+   * Destroy Knex connection pool after all tests complete.
+   */
   afterAll(async () => {
     await knex.destroy();
   });
 
+  /**
+   * Test: Process a successful webhook payload.
+   * Should respond with 200 and { received: true } if payload is valid.
+   */
   it('should process a successful transfer correctly', async () => {
     const payload = {
       merchant_ref: '202209082013GAEGBCB',
@@ -40,6 +55,10 @@ describe('Raven Webhook Handler', () => {
     expect(res.body).toHaveProperty('received', true);
   });
 
+  /**
+   * Test: Process a failed transfer.
+   * Should still respond with 200 and { received: true }.
+   */
   it('should process a failed transfer correctly', async () => {
     const payload = {
       merchant_ref: '8267995',
@@ -64,6 +83,10 @@ describe('Raven Webhook Handler', () => {
     expect(res.body).toHaveProperty('received', true);
   });
 
+  /**
+   * Test: Reject request with an invalid webhook secret.
+   * Should return 401 Unauthorized.
+   */
   it('should reject webhook with invalid secret', async () => {
     const payload = {
       merchant_ref: '111',
@@ -87,6 +110,10 @@ describe('Raven Webhook Handler', () => {
     expect(res.body).toHaveProperty('error', 'Invalid webhook secret');
   });
 
+  /**
+   * Test: Handle incomplete/missing required fields in payload.
+   * Should return 400 Bad Request with error message.
+   */
   it('should return 400 for missing fields', async () => {
     const incompletePayload = {
       secret: validSecret,
@@ -100,6 +127,10 @@ describe('Raven Webhook Handler', () => {
     expect(res.body).toHaveProperty('error');
   });
 
+  /**
+   * Test: Ensure webhook event is logged to database after successful request.
+   * Verifies DB entry in webhook_events table.
+   */
   it('should log the webhook payload successfully to the database', async () => {
     const testPayload = {
       merchant_ref: '202209082013GAEGBCB',
@@ -111,7 +142,7 @@ describe('Raven Webhook Handler', () => {
         amount: 5000
       },
       trx_ref: '202209082013HEIBIFD',
-      secret: process.env.RAVEN_WEBHOOK_SECRET || 'your_webhook_secret_key',
+      secret: validSecret,
       status: 'successful',
       session_id: '090305220908201401138651852193',
       type: 'transfer',

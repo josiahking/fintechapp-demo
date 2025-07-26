@@ -1,3 +1,8 @@
+/**
+ * @file Test suite for balance update utility functions.
+ * It validates correct behavior of handleBalanceUpdate and toDecimal.
+ */
+
 const knex = require('../knex');
 const { handleBalanceUpdate, toDecimal } = require('../src/utils/handleBalanceUpdate');
 const { createTestUser, testUser } = require('./setup');
@@ -7,6 +12,11 @@ describe('handleBalanceUpdate with type', () => {
   let virtualAccount;
   let token;
 
+  /**
+   * Runs once before all tests.
+   * - Rolls back and reapplies migrations
+   * - Seeds the database with a test user
+   */
   beforeAll(async () => {
     await knex.migrate.rollback();
     await knex.migrate.latest();
@@ -15,6 +25,11 @@ describe('handleBalanceUpdate with type', () => {
     token = setup.token;
   });
 
+  /**
+   * Runs before each individual test.
+   * - Truncates virtual_accounts table
+   * - Inserts a fresh virtual account for a test user
+   */
   beforeEach(async () => {
     await knex('virtual_accounts').truncate();
 
@@ -25,7 +40,7 @@ describe('handleBalanceUpdate with type', () => {
         user_id: testUser.id,
         account_number: '1234567890',
         account_name: 'Test Account',
-        balance: 1000,
+        balance: 1000, // Initial balance
         bank_name: 'Beststar',
         created_at: new Date(),
         updated_at: new Date()
@@ -34,14 +49,18 @@ describe('handleBalanceUpdate with type', () => {
     virtualAccount = await knex('virtual_accounts').where({ id: uuid }).first();
   });
 
+  /**
+   * Cleans up after all tests
+   * - Deletes test user and closes DB connection
+   */
   afterAll(async () => {
-    await knex('users').where({ id: testUser.id }).del()
+    await knex('users').where({ id: testUser.id }).del();
     await knex.destroy();
   });
 
   it('should credit balance correctly', async () => {
     const newBalance = await handleBalanceUpdate(virtualAccount, 300.25, 'credit');
-    expect(Number(newBalance.toFixed(2))).toBe(1300.25);
+    expect(newBalance).toBeCloseTo(1300.25, 2);
 
     const updated = await knex('virtual_accounts').where({ id: virtualAccount.id }).first();
     expect(Number(updated.balance)).toBeCloseTo(1300.25, 2);
@@ -49,7 +68,7 @@ describe('handleBalanceUpdate with type', () => {
 
   it('should debit balance correctly', async () => {
     const newBalance = await handleBalanceUpdate(virtualAccount, 400.50, 'debit');
-    expect(Number(newBalance.toFixed(2))).toBe(599.50);
+    expect(newBalance).toBeCloseTo(599.50, 2);
 
     const updated = await knex('virtual_accounts').where({ id: virtualAccount.id }).first();
     expect(Number(updated.balance)).toBeCloseTo(599.50, 2);
@@ -72,8 +91,11 @@ describe('handleBalanceUpdate with type', () => {
   });
 });
 
-
 describe('toDecimal', () => {
+  /**
+   * Tests for `toDecimal` utility
+   * Ensures values are properly rounded to two decimal places
+   */
   it('should convert valid numbers to 2 decimal places', () => {
     expect(toDecimal(100)).toBe(100.00);
     expect(toDecimal('200.789')).toBe(200.79);
