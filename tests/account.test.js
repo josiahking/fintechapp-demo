@@ -8,7 +8,7 @@ jest.mock('axios')
 
 let token
 
-describe('User Creation Test', () => {
+describe('Virtual account creation Test', () => {
 
   beforeAll(async () => {
     await knex.migrate.rollback()

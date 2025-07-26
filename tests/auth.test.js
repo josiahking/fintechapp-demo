@@ -5,7 +5,7 @@ const knex = require('knex')(require('../knexfile').development);
 beforeAll(async () => {
     await knex.migrate.rollback();
     await knex.migrate.latest();
-}, 10000);
+}, 20000);
 
 afterAll(async () => {
     await knex.destroy();

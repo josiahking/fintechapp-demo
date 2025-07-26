@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth.routes');
 const accountRoutes = require('./routes/account.routes');
+const webhookRoutes = require('./routes/webhook.routes');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
+app.use('/webhook', webhookRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
